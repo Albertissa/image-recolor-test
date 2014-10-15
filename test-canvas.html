@@ -1,0 +1,111 @@
+<!doctype html>
+
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+
+  <title>Biteable test</title>
+  <meta name="description" content="The HTML5 Herald">
+  <meta name="author" content="SitePoint">
+  <script src="http://ajax.googleapis.com/ajax/libs/jquery/2.1.1/jquery.min.js"></script>
+  <script src="tinycolor.js" type="text/javascript" charset="utf-8"></script>
+</head>
+<body>
+  <h2>Original Image</h2>
+  <img id="origImg" src="logo.png" alt="Original image" style="width:450px;height:150px"><br />
+  <h2>Redrawn Image</h2>
+  <canvas id="myCanvas" width="900" height="300" style=""></canvas><br />
+  <input id="color-1" type="color" value="#ff0000" />
+  <input id="color-2" type="color" value="#00ff00" />
+  <input id="color-3" type="color" value="#0000ff"/>
+  <button type="button" id="updateColors">Update Colors</button>
+
+
+  <script>
+  var Biteable = {
+    target_color_1 : tinycolor("#FF0000"),
+    target_color_2 : tinycolor("#00FF00"),
+    target_color_3 : tinycolor("#0000FF"),
+    alterImage : function(imageObj) {
+      // Get canvas element
+      var canvas = document.getElementById("myCanvas");
+      canvas.width = 900;
+      canvas.height = 300;
+      canvas.style.width = "450px";
+      canvas.style.height = "150px";
+      // Get canvas context
+      var ctx = canvas.getContext("2d");
+      // Draw target image on canvas
+      ctx.drawImage(imageObj, 0, 0);
+      // Get image pixel data
+      var imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+
+
+      // Iterate over data.  Data is RGBA matrix so go by +=4 to get to next pixel data.
+      for (var i = 0; i < imageData.data.length; i += 4) {
+        var pixelColor = tinycolor({
+          r: imageData.data[i],
+          g: imageData.data[i+1],
+          b: imageData.data[i+2]
+        });
+
+        // RED
+        if(imageData.data[i] > imageData.data[i+1] && imageData.data[i] > imageData.data[i+2]) {
+          var destinationColor = tinycolor({
+            h: Biteable.target_color_1.toHsl().h,
+            s: pixelColor.toHsl().s,
+            l: pixelColor.toHsl().l
+          });
+        }
+
+        // GREEN
+        if(imageData.data[i+1] > imageData.data[i] && imageData.data[i+1] > imageData.data[i+2]) {
+          var destinationColor = tinycolor({
+            h: Biteable.target_color_2.toHsl().h,
+            s: pixelColor.toHsl().s,
+            l: pixelColor.toHsl().l
+          });
+        }
+
+        // BLUE
+        if(imageData.data[i+2] > imageData.data[i] && imageData.data[i+2] > imageData.data[i+1]) {
+          var destinationColor = tinycolor({
+            h: Biteable.target_color_3.toHsl().h,
+            s: pixelColor.toHsl().s,
+            l: pixelColor.toHsl().l
+          });
+        }
+
+        if(destinationColor) {
+          // Set new color
+          imageData.data[i]   = destinationColor.toRgb().r;
+          imageData.data[i+1] = destinationColor.toRgb().g;
+          imageData.data[i+2] = destinationColor.toRgb().b;
+        }
+      }
+
+      // redraw your altered data on the canvas.
+      ctx.putImageData(imageData, 0, 0);
+    }
+  }
+
+  $(document).ready(function(){
+    var imageObj = new Image();
+    imageObj.onload = function () {
+        Biteable.alterImage(this);
+    }
+    imageObj.src = document.getElementById("origImg").src;
+
+
+    $("#updateColors").click(function(){
+      // Update colors
+      Biteable.target_color_1 = tinycolor($("#color-1").val());
+      Biteable.target_color_2 = tinycolor($("#color-2").val());
+      Biteable.target_color_3 = tinycolor($("#color-3").val());
+      // Redraw canvas
+      Biteable.alterImage(imageObj);
+    });
+  });
+  </script>
+</body>
+</html>
